@@ -3,6 +3,7 @@ import os
 from PIL import Image
 import random
 import configparser
+import numpy as np
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -24,7 +25,8 @@ def quantizetopalette(silf, pal, dither=False):
             )
     silf = silf.quantize(colors=256,palette=pal,dither=Image.NONE)
     return silf
-def makepaletteimage(palettedata):
+def makepaletteimage(cpal):
+    palettedata = cpal.copy()
     for x in range(0,len(palettedata)):
         col = palettedata[x*3]
         for i in range(0,2):
@@ -46,7 +48,7 @@ def makepaletteimage(palettedata):
 
 inpath = conf['images_in']
 outpath = conf['images_out']
-cpal = int(conf['defaultpalette'])
+cpalind = int(conf['defaultpalette'])
 
 imgsize = (int(conf['imagewidth']),int(conf['imageheight']))
 finalsize = (int(conf['imagewidth'])*int(conf['imagescale']),int(conf['imageheight']*int(conf['imagescale'])))
@@ -61,11 +63,12 @@ palettes = {
 
 randpal = False
 
-if cpal == 0:
+if cpalind == 0:
     randpal = True
-    cpal = 2
-    
-palimg = makepaletteimage(palettes[cpal])
+    cpalind = 2
+
+cpal = palettes[cpalind]
+palimg = makepaletteimage(cpal)
 
 
 
@@ -79,9 +82,10 @@ images = []
 for imgfn in os.listdir(inpath):
     print('Photographing ' + imgfn)
     if randpal:
-        cpal = random.randint(2,5)
-        palimg = makepaletteimage(palettes[cpal])
-    # Step 1: Greyscale!
+        cpalind = random.randint(2,5)
+        cpal = palettes[cpalind]
+        palimg = makepaletteimage(cpal)
+    # Step 1: Open image!
     img = Image.open(inpath + imgfn)
     img = img.convert("RGB")
     
@@ -94,6 +98,18 @@ for imgfn in os.listdir(inpath):
     # Step 4: Scale up and save
     
     img = img.resize(finalsize,Image.NEAREST)
+    
+    if conf.getboolean('transparent'):
+        img = img.convert("RGBA")
+        imarr = np.array(img)
+        r,g,b,a = imarr.T
+        for x in cpal:
+            replacearea = (r == x)
+            imarr[..., :][replacearea.T] = (0,0,0,255-x)
+        img = Image.fromarray(imarr)
+            
+        
+    
     img.save(outpath + imgfn)
 print("done!")
 

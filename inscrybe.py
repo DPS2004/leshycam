@@ -46,7 +46,10 @@ def makepaletteimage(palettedata):
 
 inpath = conf['images_in']
 outpath = conf['images_out']
-cpal = int(conf['palette'])
+cpal = int(conf['defaultpalette'])
+
+imgsize = (int(conf['imagewidth']),int(conf['imageheight']))
+finalsize = (int(conf['imagewidth'])*int(conf['imagescale']),int(conf['imageheight']*int(conf['imagescale'])))
 
 palettes = {
     2: [0,255],
@@ -64,6 +67,8 @@ if cpal == 0:
     
 palimg = makepaletteimage(palettes[cpal])
 
+
+
 try: 
     os.mkdir(outpath) 
     print("loading images...")
@@ -76,12 +81,20 @@ for imgfn in os.listdir(inpath):
     if randpal:
         cpal = random.randint(2,5)
         palimg = makepaletteimage(palettes[cpal])
+    # Step 1: Greyscale!
+    img = Image.open(inpath + imgfn)
+    img = img.convert("RGB")
     
-    # Step 1: quantize to the palette
-    ogimg = Image.open(inpath + imgfn)
-    newimg = quantizetopalette(ogimg,palimg)
+    # Step 2: quantize to the palette
+    img = quantizetopalette(img,palimg)
     
-    newimg.save(outpath + imgfn)
+    # Step 3: resize to desired resolution
+    img = img.resize(imgsize,Image.NEAREST)
+    
+    # Step 4: Scale up and save
+    
+    img = img.resize(finalsize,Image.NEAREST)
+    img.save(outpath + imgfn)
 print("done!")
 
 

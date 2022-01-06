@@ -1,6 +1,6 @@
 import sys
 import os
-from PIL import Image, ImageSequence
+from PIL import Image, ImageSequence, ImageFilter
 import random
 import configparser
 import numpy as np
@@ -85,16 +85,21 @@ def imageprocess(img,gifmode=False):
     
     # Step 2: quantize to the palette
     img = quantizetopalette(img,palimg)
+    img = img.convert("RGB")
     
     # Step 3: resize to desired resolution
     img = img.resize(imgsize,Image.NEAREST)
     
-    # Step 4: Scale up and save
+    # Step 4: edge detection??
+    if conf.getboolean('edgedetect'):
+    
+        
+        img.show()
+    # Step 5: Scale up and save
     
     img = img.resize(finalsize,Image.NEAREST)
     
     if conf.getboolean('transparent') and not gifmode:
-        img = img.convert("RGB")
         img = img.convert("RGBA")
         imarr = np.array(img)
         r,g,b,a = imarr.T
@@ -141,6 +146,8 @@ for imgfn in os.listdir(inpath):
             index += 1
         newgif.save(outpath + imgfn,save_all = True,append_images = appendframes)
     
+    if conf.getboolean('justone'):
+        break
     
     
 print("done!")

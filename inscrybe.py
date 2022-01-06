@@ -91,10 +91,10 @@ def imageprocess(img,gifmode=False):
     img = img.resize(imgsize,Image.NEAREST)
     
     # Step 4: edge detection??
-    if conf.getboolean('edgedetect'):
+    #if conf.getboolean('edgedetect'):
     
         
-        img.show()
+        # img.show()
     # Step 5: Scale up and save
     
     img = img.resize(finalsize,Image.NEAREST)

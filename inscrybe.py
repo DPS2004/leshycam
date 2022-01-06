@@ -1,6 +1,6 @@
 import sys
 import os
-from PIL import Image
+from PIL import Image, ImageSequence
 import random
 import configparser
 import numpy as np
@@ -72,21 +72,15 @@ palimg = makepaletteimage(cpal)
 
 
 
+print("loading images...")
 try: 
     os.mkdir(outpath) 
-    print("loading images...")
+    
 except:
-    print("loading images...")
-    # wow cool coding practices nice job
+    pass
 images = []
-for imgfn in os.listdir(inpath):
-    print('Photographing ' + imgfn)
-    if randpal:
-        cpalind = random.randint(2,5)
-        cpal = palettes[cpalind]
-        palimg = makepaletteimage(cpal)
-    # Step 1: Open image!
-    img = Image.open(inpath + imgfn)
+
+def imageprocess(img,gifmode=False):
     img = img.convert("RGB")
     
     # Step 2: quantize to the palette
@@ -99,7 +93,8 @@ for imgfn in os.listdir(inpath):
     
     img = img.resize(finalsize,Image.NEAREST)
     
-    if conf.getboolean('transparent'):
+    if conf.getboolean('transparent') and not gifmode:
+        img = img.convert("RGB")
         img = img.convert("RGBA")
         imarr = np.array(img)
         r,g,b,a = imarr.T
@@ -107,10 +102,47 @@ for imgfn in os.listdir(inpath):
             replacearea = (r == x)
             imarr[..., :][replacearea.T] = (0,0,0,255-x)
         img = Image.fromarray(imarr)
-            
-        
+    if gifmode:
+        try:
+           del img.info['transparency']
+        except:
+            pass
+    return img
+
+#loop thru folder
+for imgfn in os.listdir(inpath):
+    print('Photographing ' + imgfn)
+    if randpal:
+        cpalind = random.randint(2,5)
+        cpal = palettes[cpalind]
+        palimg = makepaletteimage(cpal)
     
-    img.save(outpath + imgfn)
+    img = Image.open(inpath + imgfn)
+    
+    #gif check.
+    try:
+        img.seek(1)
+    except EOFError:
+        img = imageprocess(img)
+        img.save(outpath + imgfn)
+    else:
+        # fix crash bug?
+        
+        index = 0
+        newgif = img
+        appendframes = []
+        for frame in ImageSequence.Iterator(img):
+            print('Photographing ' + imgfn + ' frame ' + str(index+1))
+            frame = imageprocess(frame,True)
+            if index == 0:
+                newgif = frame
+            else:
+                appendframes.append(frame)
+            index += 1
+        newgif.save(outpath + imgfn,save_all = True,append_images = appendframes)
+    
+    
+    
 print("done!")
 
 

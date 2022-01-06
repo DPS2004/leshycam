@@ -2,16 +2,11 @@
 Generate Inscryption styled portrait sprites from any image.
 
 # Setup and Config
-This project uses PIL and ConfigParser.
+This project uses PIL, Numpy, and ConfigParser.
 
-The following values can be edited in config.ini:
+All settings can be viewed and changed by editing config.ini
 
-images_in: The folder that Leshy's Camera uses as input
-
-images_out: The folder that Leshy's Camera uses as input
-
-palette: The number of colors per card. Set to 0 for a random palette each image.
-
+I tried to comment what some of the less self-explanatory options do
 
 # Notes on colors:
 Most cards use either 2 brightness levels, 000 and 255
